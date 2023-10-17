@@ -1,2 +1,7 @@
 python track_briefcam.py --yolo-weights yolov5s.pt --iou-thres 0.25 --device 0 --classes 0 --source ./datasets/video4.mp4 --save-vid
 
+#--------create database mysql----------------
+set FLASK_APP=modeldbs
+flask run
+flask db init
+#---------------------------------------------

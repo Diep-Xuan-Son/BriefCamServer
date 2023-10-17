@@ -46,23 +46,25 @@ class BriefCam():
 		self.data_check_overlap = None
 		self.percent_total_frame = 0.2    # %
 		self.bgr_pre = ""
+		self.images = []
+		self.bgrs = []
 		# global percentCompleteBrief
 		# percentCompleteBrief = 0.75
 
 	def create_bgr(self, count, image, total_frame):	# b1
-		images = []
-		bgrs = []
+		# images = []
+		# bgrs = []
 		image = cv2.resize(image, (image.shape[1]//4, image.shape[0]//4), interpolation=cv2.INTER_AREA)
-		images.append(image)
-		if (count+1) % (total_frame*10//100) == 0:
-			bgrs.append(np.median(images, axis = 0))
-			if (count+1) % (int(total_frame*self.percent_total_frame)) == 0:
-				bgr_pth = os.path.join(self.path_background_data, f"bgr_{count}.jpg")
-				bgr_subtract = np.median(bgrs, axis = 0)
-				bgr_subtract = cv2.resize(bgr_subtract, (image.shape[1]*4, image.shape[0]*4), interpolation=cv2.INTER_AREA)
-				cv2.imwrite(bgr_pth, bgr_subtract)
-				bgrs.clear()
-			images.clear()
+		self.images.append(image)
+		if (count+1) % (total_frame*5//100) == 0:
+			self.bgrs.append(np.median(self.images, axis = 0))
+			self.images.clear()
+		if (count+1) % (int(total_frame*self.percent_total_frame)) == 0:
+			bgr_pth = os.path.join(self.path_background_data, f"bgr_{count}.jpg")
+			bgr_subtract = np.median(self.bgrs, axis = 0)
+			bgr_subtract = cv2.resize(bgr_subtract, (image.shape[1]*4, image.shape[0]*4), interpolation=cv2.INTER_AREA)
+			cv2.imwrite(bgr_pth, bgr_subtract)
+			self.bgrs.clear()
 
 	def chooes_bgs(self, current_frame_count, frame_total):
 		count_bgr = int(frame_total*self.percent_total_frame)
@@ -240,6 +242,7 @@ class BriefCam():
 		out = cv2.VideoWriter(os.path.join(self.path_result,f'{self.name_vid}_brief.mp4'),cv2.VideoWriter_fourcc(*'mp4v'), information["fps"], (information["width"], information["height"]))
 		color = [np.random.randint(0, 255) for _ in range(3)]
 		# bgr = cv2.imread(os.path.join(self.path_background_data, "bgr_0.jpg"))
+		ren_time_pre = self.data_convert[0][1]
 
 		num_data = len(self.data_convert)
 		# global percentCompleteBrief
@@ -252,12 +255,14 @@ class BriefCam():
 				f.write(f"{percentComplete:.2f}")
 			# percentCompleteBrief = 0.75 + (i+1)*0.25/len(self.data_convert)
 
-			if np.isnan(ren[3]):
-				continue
-
 			if i%self.n_person == 0:
+				if np.isnan(ren[1]):
+					ren[1] = ren_time_pre
 				current_frame_count = int(ren[1]*information["fps"])
 				bgr = self.chooes_bgs(current_frame_count, information["total_frame"])
+
+			if np.isnan(ren[3]):
+				continue
 
 			minute = 0
 			hour = 0
